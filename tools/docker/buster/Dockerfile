@@ -23,9 +23,11 @@ RUN apt-get update && apt-get install -y \
     g++ xfonts-utils xsltproc default-jre-headless python3 \
     libc6-dev libncurses5-dev \
     libjson-perl libxml-parser-perl libparse-yapp-perl \
-    golang-go \
     git openssh-client \
     --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 
+RUN cd /tmp/ && wget https://go.dev/dl/go1.23.4.linux-amd64.tar.gz -O go.linux-amd64.tar.gz && \
+    rm -rf /usr/local/go && tar -C /usr/local -xzf go.linux-amd64.tar.gz && rm -f go.linux-amd64.tar.gz && \
+    ln -sf /usr/local/go/bin/* /usr/local/bin/ && go version
 USER docker
