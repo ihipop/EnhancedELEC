@@ -11,6 +11,8 @@ docker build --pull -t libreelec.buster  tools/docker/buster
 docker run \
   -it --rm \
   --log-driver none \
+  -e DISTRO="EnhancedELEC" \
+  -e ADDON_OVERWRITE="yes" \
   -v `pwd`:/build \
   -v ~/.libreelec/:/build/.libreelec \
   -w /build libreelec.buster bash
