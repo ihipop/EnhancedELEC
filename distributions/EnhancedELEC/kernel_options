@@ -67,4 +67,7 @@ CONFIG_BPF_SYSCALL=y
 # deprecated since linux v6.9
 CONFIG_THERMAL_WRITABLE_TRIPS=y
 
+# netorking Queueing/Scheduling support
+CONFIG_NET_SCHED=y
+
 #end
