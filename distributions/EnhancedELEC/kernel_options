@@ -62,3 +62,9 @@ CONFIG_KCMP=y
 CONFIG_RT_GROUP_SCHED=n
 CONFIG_CGROUP_BPF=y
 CONFIG_BPF_SYSCALL=y
+
+# drivers/thermal
+# deprecated since linux v6.9
+CONFIG_THERMAL_WRITABLE_TRIPS=y
+
+#end
