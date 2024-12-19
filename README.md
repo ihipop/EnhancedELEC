@@ -20,11 +20,45 @@ docker run \
 PROJECT=Rockchip ARCH=arm DEVICE=RK3399 CUSTOM_VERSION=10.0.2 UBOOT_SYSTEM=nanopc-t4 make image
 ```
 
+# Features enabled
 
+## KERNEL
+  ### currently RK3399 only:
+  - enable builtin PCIE device so we can mount NVME disk during early kernel boot and put storage on nvme disk
+  - add more iptables/iproute features eg: 
+    - CONFIG_IP_ADVANCED_ROUTER
+    - CONFIG_NET_IPGRE
+    - CONFIG_DEFAULT_BBR
+    - CONFIG_NF_TABLES
+    - CONFIG_IP_SET
+    - CONFIG_NF_TPROXY_IPV4/IPV6
+    - CONFIG_VLAN_8021Q
+    - CONFIG_FIB_RULES
+    - CONFIG_NETFILTER_XT_MARK
+    - NF_CONNTRACKNF_CONNTRACK
+    - ......
+
+
+## PACKAGE
+  - ipset
+  - nftables
+  - bubblewrap
+  - docker (a relatively latest version)
+  - systemd-nspawn
+  - agetty
+  - ......
+
+## SYSTEM
+  - serial-getty on UART with auto login (could be disabled by `systemctl mask serial-getty@ttyS2`)
+  - a serious of systemd VT/console/tty pre-defined service
+  - support entware mount point (/opt)
+  - add fake intereptor for arm64 kernel on arm64 device while the rootfs is arm (entware is suggested )
+
+# The Original LibreELEC Readme
 <details>
-<summary><i>
-Expand The Original LibreELEC Readme
-</i></summary>
+<summary><i><b>
+View
+</b></i></summary>
 
 # LibreELEC
 
