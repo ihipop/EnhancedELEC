@@ -1,0 +1,27 @@
+From 5ffd3bf14c0ffc0353a2b53315c236fb1068111b Mon Sep 17 00:00:00 2001
+From: ihipop <ihipop@gmail.com>
+Date: Mon, 30 Dec 2024 20:13:27 +0800
+Subject: [PATCH] Bluetooth: btbcm: add patch ram for bluetooth Bluetooth on
+ the BCM43752 needs a patchram file to function correctly.
+
+Signed-off-by: Angus Ainslie <angus@akkea.ca>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ drivers/bluetooth/btbcm.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/bluetooth/btbcm.c b/drivers/bluetooth/btbcm.c
+index 1b9743b7f..c5af5715c 100644
+--- a/drivers/bluetooth/btbcm.c
++++ b/drivers/bluetooth/btbcm.c
+@@ -387,6 +387,7 @@ struct bcm_subver_table {
+ };
+ 
+ static const struct bcm_subver_table bcm_uart_subver_table[] = {
++	{ 0x1111, "BCM4362A2"	},	/* 000.017.017 */
+ 	{ 0x4103, "BCM4330B1"	},	/* 002.001.003 */
+ 	{ 0x410d, "BCM4334B0"	},	/* 002.001.013 */
+ 	{ 0x410e, "BCM43341B0"	},	/* 002.001.014 */
+-- 
+2.47.1
+
