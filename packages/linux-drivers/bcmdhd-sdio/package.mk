@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-PKG_NAME="bcmdhd"
-PKG_VERSION="01f5a449f2a34e7766d0741060a954ec6fa422a3"
-PKG_SHA256="68b11462b7a3acd50efc608a85404fe91c345b3e4b979f9625d0156cff28f78b"
+PKG_NAME="bcmdhd-sdio"
+PKG_VERSION="5c5b96558aabf1680069503fb173005cabdb8281"
+PKG_SHA256="dfa34cc57a70ad884ed5dffd823d0d552b2f3e69dd451e2865543b2f4bb6625d"
 PKG_LICENSE="GPL"
-PKG_SITE="https://github.com/StreamUnlimited/broadcom-bcmdhd-4359"
-PKG_URL="https://github.com/ihipop/broadcom-bcmdhd-4359/archive/${PKG_VERSION}.tar.gz"
-PKG_LONGDESC="GPL Broadcom driver for bcm4359 / AP6398S"
+PKG_SITE="https://github.com/ihipop/broadcom-bcmdhd"
+PKG_URL="https://github.com/ihipop/broadcom-bcmdhd/archive/${PKG_VERSION}.tar.gz"
+PKG_LONGDESC="Broadcom bcmdhd-sdio driver"
 PKG_IS_KERNEL_PKG="yes"
 
 pre_make_target() {
@@ -24,8 +24,7 @@ make_target() {
        CONFIG_BCMDHD_NVRAM_PATH="/lib/firmware/bcmdhd/" \
        CONFIG_BCMDHD_FW_PATH="/lib/firmware/bcmdhd/" \
        CONFIG_BCMDHD_SDIO=y \
-       CONFIG_BCMDHD_SDIO_IRQ=y \
-
+       CONFIG_BCMDHD_OOB= 
 }
 
 makeinstall_target() {
