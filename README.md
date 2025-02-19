@@ -13,7 +13,7 @@ docker run \
   --log-driver none \
   -e DISTRO="EnhancedELEC" \
   -e ADDON_OVERWRITE="yes" \
-  -v `pwd`:/build \
+  -v $(pwd):/build \
   -v ~/.libreelec/:/build/.libreelec \
   -w /build libreelec.buster bash
 # RUN the real build
@@ -24,11 +24,12 @@ PROJECT=Rockchip ARCH=arm DEVICE=RK3399 CUSTOM_VERSION=10.0.2 UBOOT_SYSTEM=nanop
 
 ## KERNEL
   ### currently RK3399 only:
-  - enable builtin PCIE device so we can mount NVME disk during early kernel boot and put storage on nvme disk
-  - add more iptables/iproute features eg: 
-    - CONFIG_IP_ADVANCED_ROUTER
+  - enable builtin PCIE device so we can mount NVME disk during early kernel boot and put storage on nvme disk (`CONFIG_PCIE_ROCKCHIP`)
+  - add more iptables/iprouting features eg:
+    - set default Congestion Control Algorithm to BBR (`CONFIG_DEFAULT_BBR`)
+    - kernel tls enabled
+    - almost full featured iprouting features, eg: CONFIG_IP_ADVANCED_ROUTER
     - CONFIG_NET_IPGRE
-    - CONFIG_DEFAULT_BBR
     - CONFIG_NF_TABLES
     - CONFIG_IP_SET
     - CONFIG_NF_TPROXY_IPV4/IPV6
@@ -36,7 +37,7 @@ PROJECT=Rockchip ARCH=arm DEVICE=RK3399 CUSTOM_VERSION=10.0.2 UBOOT_SYSTEM=nanop
     - CONFIG_FIB_RULES
     - CONFIG_NETFILTER_XT_MARK
     - NF_CONNTRACKNF_CONNTRACK
-    - CONFIG_THERMAL_WRITABLE_TRIPS (kernel < 6.9)
+    - writeable thermal trip points, so you can custom PWM beahvior (this is default when kernel >= 6.9, `CONFIG_THERMAL_WRITABLE_TRIPS`)
     - ......
 
 
