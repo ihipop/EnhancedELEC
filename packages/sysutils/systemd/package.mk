@@ -63,7 +63,7 @@ PKG_MESON_OPTS_TARGET="--libdir=/usr/lib \
                        -Dlogind=true \
                        -Dhostnamed=true \
                        -Dlocaled=false \
-                       -Dmachined=false \
+                       -Dmachined=true \
                        -Dportabled=false \
                        -Duserdb=false \
                        -Dhomed=disabled \
@@ -156,8 +156,8 @@ post_makeinstall_target() {
   sed '/^ConditionNeedsUpdate=.*$/d' -i ${INSTALL}/usr/lib/systemd/system/systemd-hwdb-update.service
 
   # remove nspawn
-  safe_remove ${INSTALL}/usr/bin/systemd-nspawn
-  safe_remove ${INSTALL}/usr/lib/systemd/system/systemd-nspawn@.service
+  # safe_remove ${INSTALL}/usr/bin/systemd-nspawn
+  # safe_remove ${INSTALL}/usr/lib/systemd/system/systemd-nspawn@.service
 
   # remove unneeded generators
   for gen in ${INSTALL}/usr/lib/systemd/system-generators/*; do
@@ -259,6 +259,8 @@ post_makeinstall_target() {
   ln -sf /storage/.config/hwdb.d ${INSTALL}/etc/udev/hwdb.d
   safe_remove ${INSTALL}/etc/udev/rules.d
   ln -sf /storage/.config/udev.rules.d ${INSTALL}/etc/udev/rules.d
+  #systemd-nspawn
+  ln -sf /storage/.config/systemd-nspawn ${INSTALL}/etc/systemd/nspawn
 
   # journald
   ln -sf /storage/.cache/journald.conf.d ${INSTALL}/usr/lib/systemd/journald.conf.d
