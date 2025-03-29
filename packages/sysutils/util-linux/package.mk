@@ -56,7 +56,9 @@ PKG_CONFIGURE_OPTS_TARGET="${UTILLINUX_CONFIG_DEFAULT} \
                            --enable-blkid \
                            --enable-lscpu \
                            --enable-lsfd \
-                           --enable-mount"
+                           --enable-mount \
+                           --enable-agetty \
+                               "
 
 if [ "${SWAP_SUPPORT}" = "yes" ]; then
   PKG_CONFIGURE_OPTS_TARGET+=" --enable-swapon"
