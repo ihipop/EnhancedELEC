@@ -1120,9 +1120,9 @@ done
 /usr/bin/busybox chroot /sysroot /usr/sbin/kernel-overlays-setup
 
 # tell OE settings addon to disable updates
-if [ "$UPDATE_DISABLED" = "yes" ]; then
+# if [ "$UPDATE_DISABLED" = "yes" ]; then
   echo "" > /sysroot/dev/.update_disabled
-fi
+# fi
 
 if [ "$FLASH_NETBOOT" = "yes" ]; then
   echo "" > /sysroot/dev/.flash_netboot
