@@ -1,0 +1,14 @@
+[Unit]
+Description=OEM factory settings
+Before=kodi.service
+After=graphical.target
+ConditionPathExists=!/storage/.kodi/userdata/.oem_initiated
+
+[Service]
+Type=oneshot
+Environment=HOME=/storage
+ExecStart=/bin/sh -c ". /etc/profile; exec /bin/sh /usr/lib/libreelec/oem-factory.sh"
+RemainAfterExit=yes
+
+[Install]
+WantedBy=kodi.service
