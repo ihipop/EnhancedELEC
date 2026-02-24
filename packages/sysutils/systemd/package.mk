@@ -8,7 +8,7 @@ PKG_SHA256="96e75bd08c57ad401677456fb88ef54a9f05bb1695693013bc6ecce839640fd5"
 PKG_LICENSE="LGPL2.1+"
 PKG_SITE="http://www.freedesktop.org/wiki/Software/systemd"
 PKG_URL="https://github.com/systemd/systemd-stable/archive/v${PKG_VERSION}.tar.gz"
-PKG_DEPENDS_TARGET="toolchain libcap kmod util-linux entropy libidn2 wait-time-sync Jinja2:host"
+PKG_DEPENDS_TARGET="toolchain libcap kmod util-linux entropy libidn2 wait-time-sync zstd Jinja2:host"
 PKG_LONGDESC="A system and session manager for Linux, compatible with SysV and LSB init scripts."
 
 PKG_MESON_OPTS_TARGET="--libdir=/usr/lib \
@@ -45,7 +45,7 @@ PKG_MESON_OPTS_TARGET="--libdir=/usr/lib \
                        -Dbzip2=disabled \
                        -Dxz=disabled \
                        -Dlz4=disabled \
-                       -Dzstd=disabled \
+                       -Dzstd=enabled \
                        -Dxkbcommon=disabled \
                        -Dpcre2=disabled \
                        -Dglib=disabled \
@@ -58,7 +58,7 @@ PKG_MESON_OPTS_TARGET="--libdir=/usr/lib \
                        -Denvironment-d=false \
                        -Dbinfmt=false \
                        -Drepart=disabled \
-                       -Dcoredump=false \
+                       -Dcoredump=true \
                        -Dresolve=false \
                        -Dlogind=true \
                        -Dhostnamed=true \
@@ -259,11 +259,18 @@ post_makeinstall_target() {
   ln -sf /storage/.config/hwdb.d ${INSTALL}/etc/udev/hwdb.d
   safe_remove ${INSTALL}/etc/udev/rules.d
   ln -sf /storage/.config/udev.rules.d ${INSTALL}/etc/udev/rules.d
-  #systemd-nspawn
-  ln -sf /storage/.config/systemd-nspawn ${INSTALL}/etc/systemd/nspawn
-
+ 
   # journald
   ln -sf /storage/.cache/journald.conf.d ${INSTALL}/usr/lib/systemd/journald.conf.d
+
+  # Custom by EnahncedELEC
+  
+  # systemd-nspawn
+  ## must to prevent overwrite our custom systemd-nspawn.conf
+  safe_remove ${INSTALL}/usr/lib/tmpfiles.d/systemd-nspawn.conf
+  ln -sf /storage/.config/systemd-nspawn ${INSTALL}/etc/systemd/nspawn
+  # systemd-coredump
+  ln -sf /storage/.config/coredump.conf.d ${INSTALL}/etc/systemd/coredump.conf.d
 }
 
 post_install() {
@@ -271,6 +278,9 @@ post_install() {
 
   add_group systemd-timesync 191
   add_user systemd-timesync x 191 191 "systemd-timesync" "/" "/bin/false"
+
+  add_group systemd-coredump 192
+  add_user systemd-coredump x 192 192 "systemd Core Dumper" "/" "/bin/false"
 
   add_group systemd-network 193
   add_user systemd-network x 193 193 "systemd-network" "/" "/bin/sh"
@@ -305,5 +315,7 @@ post_install() {
   enable_service network-base.service
   enable_service systemd-timesyncd.service
   enable_service systemd-timesyncd-setup.service
+  # Custom by EnahncedELEC
   enable_service serial-getty@ttyS2.service
+  enable_service systemd-coredump.socket
 }
