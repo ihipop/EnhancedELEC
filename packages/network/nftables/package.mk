@@ -8,3 +8,5 @@ PKG_SITE="http://netfilter.org/projects/nftables"
 PKG_URL="http://netfilter.org/projects/${PKG_NAME}/files/${PKG_NAME}-${PKG_VERSION}.tar.xz"
 PKG_DEPENDS_TARGET="toolchain libnftnl libedit"
 PKG_LONGDESC="nftables is the modern Linux kernel packet classification framework"
+
+PKG_CONFIGURE_OPTS_TARGET="--with-mini-gmp"
