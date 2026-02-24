@@ -25,7 +25,7 @@ To bundle pre-installed addons (e.g. Docker, Chinese language pack) into the ima
 
 ```bash
 scripts/create_addon docker
-OEM=yes ...... make image
+OEM=yes make image
 ```
 
 # Features enabled
@@ -41,7 +41,7 @@ OEM=yes ...... make image
   - systemd-nspawn / machinectl (with persistent `/storage/.systemd-machines` storage)
   - systemd-coredump / coredumpctl (with Zstd compression, persistent `/storage/.cache/coredump` storage)
   - agetty
-  - entware (install via `installentware`, ported from CoreELEC)
+  - entware (install via `installentware`, ported from CoreELEC, could be disabled by `ENTWARE_SUPPORT=no`)
 
 ## SYSTEM
   - serial-getty on UART with auto login (could be disabled by `systemctl mask serial-getty@ttyS2`)

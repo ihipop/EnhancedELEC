@@ -257,3 +257,12 @@
 # Space separated list is supported,
 # e.g. ADDITIONAL_PACKAGES="PACKAGE1 PACKAGE2"
   ADDITIONAL_PACKAGES="bubblewrap ipset nftables"
+
+# build with entware installer
+case ${ARCH} in
+  aarch64) ENTWARE_ARCH="aarch64-k3.10" ;;
+  arm)     ENTWARE_ARCH="armv7sf-k3.2" ;;
+esac
+if [ -n "${ENTWARE_ARCH}" ]; then
+  ENTWARE_SUPPORT="${ENTWARE_SUPPORT:-yes}"
+fi
