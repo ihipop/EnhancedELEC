@@ -39,7 +39,7 @@ make_target() {
 				echo "Can't find the addon: ${ITEM}"
 				exit 255
 			fi
-			wget "https://mirrors.kodi.tv/addons/omega/${HTTP_PATH}" -O "${DL_DIR}/${ITEM}.zip"
+			wget "https://mirrors.kodi.tv/addons/${KODI_RELEASE}/${HTTP_PATH}" -O "${DL_DIR}/${ITEM}.zip"
 		done
 	)
 	ADDON_MANIFEST="addon-manifest.txt"
