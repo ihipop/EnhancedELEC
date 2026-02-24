@@ -7,7 +7,7 @@ Currently it's only tested on ROCKCHIP NANOPC T4
 # Build
 
 ```bash
-docker build --pull -t libreelec.buster  tools/docker/buster
+docker build --pull -t libreelec  tools/docker/bookworm
 docker run \
   -it --rm \
   --log-driver none \
@@ -15,7 +15,7 @@ docker run \
   -e ADDON_OVERWRITE="yes" \
   -v $(pwd):/build \
   -v ~/.libreelec/:/build/.libreelec \
-  -w /build libreelec.buster bash
+  -w /build libreelec bash
 # RUN the real build
 export PROJECT=Rockchip ARCH=aarch64 DEVICE=RK3399 CUSTOM_VERSION=999 UBOOT_SYSTEM=nanopc-t4 
 make image
