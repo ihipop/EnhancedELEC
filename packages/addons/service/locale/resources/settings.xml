@@ -22,7 +22,7 @@
         </setting>
         <setting id="locale" type="string" label="30002" help="">
           <level>0</level>
-          <default>en_GB</default>
+          <default>en_US</default>
           <constraints>
             <options>@LOCALES@
             </options>
