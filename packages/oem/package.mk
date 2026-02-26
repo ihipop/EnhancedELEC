@@ -3,6 +3,7 @@
 
 PKG_NAME="oem"
 PKG_VERSION="20260225"
+PKG_REV="1"
 PKG_LICENSE="various"
 PKG_SITE="http://www.libreelec.tv"
 PKG_URL=""
@@ -56,7 +57,7 @@ make_target() {
 makeinstall_target() {
 	mkdir -p ${INSTALL}/usr/share/kodi/
 	rm -f ${PKG_BUILD}/factory-default.tar.xz
-	tar cvf ${PKG_BUILD}/factory-default.tar.xz --owner=root --group=root -C ./factory-default .
+	tar cJvf ${PKG_BUILD}/factory-default.tar.xz --owner=root --group=root -C ./factory-default .
 	cp -av ${PKG_BUILD}/factory-default.tar.xz ${INSTALL}/usr/share/kodi/
 	mkdir -p $INSTALL/usr/lib/libreelec
   	cp -PR $PKG_DIR/scripts/* $INSTALL/usr/lib/libreelec
