@@ -12,6 +12,9 @@ PKG_LONGDESC="entware: A software repository that offers various software progra
 PKG_TOOLCHAIN="manual"
 
 post_install() {
+  # Create /opt symlink
+  ln -sf /storage/.opt $INSTALL/opt
+  
   mkdir -p $INSTALL/usr/sbin
     cp -P $PKG_DIR/scripts/installentware $INSTALL/usr/sbin
 

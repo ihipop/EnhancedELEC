@@ -12,7 +12,10 @@ PKG_LONGDESC="misc-packages: Metapackage for miscellaneous packages"
 
 # Entware support
 if [ "${ENTWARE_SUPPORT}" = "yes" ]; then
-  mkdir -p ${INSTALL}
-  ln -sf /storage/.opt ${INSTALL}/opt
   PKG_DEPENDS_TARGET+=" entware"
 fi
+
+post_install() {
+  # Storage data dir
+  ln -sf /storage/.data ${INSTALL}/data
+}
