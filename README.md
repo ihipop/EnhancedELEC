@@ -17,7 +17,7 @@ docker run \
   -v ~/.libreelec/:/build/.libreelec \
   -w /build libreelec bash
 # RUN the real build
-export PROJECT=Rockchip ARCH=aarch64 DEVICE=RK3399 CUSTOM_VERSION=999 UBOOT_SYSTEM=nanopc-t4
+export PROJECT=Rockchip ARCH=aarch64 DEVICE=RK3399 UBOOT_SYSTEM=nanopc-t4 CUSTOM_VERSION=999 
 make image
 ```
 
@@ -34,20 +34,21 @@ OEM=yes make image
   [Here](./distributions/EnhancedELEC/kernel_options#L178)
 
 ## PACKAGE
-  - ipset
-  - nftables
+  - network stack tools like: nftables ipset conntrack etc...
   - bubblewrap
   - docker (Kodi addon, a relatively latest version)
-  - systemd-nspawn / machinectl (with persistent `/storage/.systemd-machines` storage)
+  - systemd-nspawn / machinectl (with persistent `/data/systemd-machines` link at storage `/storage/.data`)
   - systemd-coredump / coredumpctl (with Zstd compression, persistent `/storage/.cache/coredump` storage)
   - agetty
   - entware (install via `installentware`, ported from CoreELEC, could be disabled by `ENTWARE_SUPPORT=no`)
+  - ...
 
 ## SYSTEM
   - serial-getty on UART with auto login (could be disabled by `systemctl mask serial-getty@ttyS2`)
   - a series of systemd VT/console/tty pre-defined services
   - coredump configuration overlay at `/storage/.config/coredump.conf.d/` (user-overridable)
   - systemd-nspawn configuration overlay at `/storage/.config/systemd-nspawn/` (user-overridable)
+  - ...
 
 # The Original LibreELEC Readme
 <details>
