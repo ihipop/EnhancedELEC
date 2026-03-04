@@ -1,0 +1,44 @@
+" ============================================================================
+" Enhanced Default Vim Configuration for LibreELEC
+" ============================================================================
+
+" --- Basic Settings ---
+" set nocompatible         " Use Vim defaults instead of Vi
+set number               " Show line numbers
+set ruler                " Show cursor position
+set cursorline           " Highlight current line
+set showcmd              " Show partial commands
+set hlsearch             " Highlight search results
+set incsearch            " Incremental search
+set ignorecase           " Ignore case in search
+set smartcase            " Override ignorecase if search contains uppercase
+set mouse=a              " Enable mouse support
+" set backspace=indent,eol,start  " Allow backspacing over everything in insert mode
+
+" --- Formatting & Indentation ---
+set expandtab            " Use spaces instead of tabs
+set shiftwidth=4         " Number of spaces for indentation
+set softtabstop=4        " Number of spaces for <Tab>
+set tabstop=4            " Number of spaces for a literal <Tab>
+set autoindent           " Copy indent from current line when starting a new line
+set smartindent          " Smart autoindenting for C-style code
+
+" --- Display & Syntax ---
+if has("syntax")
+  syntax on              " Enable syntax highlighting
+endif
+" set bg=dark              " Use a dark background
+
+" --- File Paths & Cache ---
+" Redirect cache directories to ~/.cache/vim for cleanliness
+set directory=~/.cache/vim/swap//
+set swapfile             " Enable swap file
+set backupdir=~/.cache/vim/backup//
+set backup               " Enable backup
+set undodir=~/.cache/vim/undo//
+set undofile             " Enable persistent undo
+set viminfofile=~/.cache/vim/viminfo
+
+" --- Encoding ---
+" set encoding=utf-8       " Set internal encoding
+" set fileencodings=utf-8,gbk,gb18030,latin1

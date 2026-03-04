@@ -256,7 +256,7 @@
 # additional packages to install:
 # Space separated list is supported,
 # e.g. ADDITIONAL_PACKAGES="PACKAGE1 PACKAGE2"
-  ADDITIONAL_PACKAGES="bubblewrap ipset nftables conntrack-tools"
+  ADDITIONAL_PACKAGES="bubblewrap ipset nftables conntrack-tools enhancedelec-default-configs"
 
 # build with entware installer
 case ${ARCH} in
