@@ -1,0 +1,217 @@
+--- a/xbmc/guilib/GUIFontTTF.h	2026-03-05 10:11:39.592539487 +0800
++++ b/xbmc/guilib/GUIFontTTF.h	2026-03-05 12:19:48.309609727 +0800
+@@ -170,7 +170,7 @@
+ 
+   // Stuff for pre-rendering for speed
+   Character* GetCharacter(character_t letter, FT_UInt glyphIndex);
+-  bool CacheCharacter(FT_UInt glyphIndex, uint32_t style, Character* ch);
++  bool CacheCharacter(FT_UInt glyphIndex, uint32_t style, Character* ch, FT_Face face = nullptr);
+   void RenderCharacter(CGraphicContext& context,
+                        float posX,
+                        float posY,
+@@ -226,6 +226,10 @@
+   FT_Face m_face{nullptr};
+   FT_Stroker m_stroker{nullptr};
+ 
++  // Fallback font face for missing glyphs (e.g. CJK characters)
++  // Font file data is held in a process-wide static buffer, see GUIFontTTF.cpp
++  FT_Face m_fallbackFace{nullptr};
++
+   hb_font_t* m_hbFont{nullptr};
+ 
+   float m_originX{0.0f};
+--- a/xbmc/guilib/GUIFontTTF.cpp	2026-03-05 10:11:39.592539487 +0800
++++ b/xbmc/guilib/GUIFontTTF.cpp	2026-03-05 12:18:44.905501043 +0800
+@@ -9,6 +9,8 @@
+ #include "GUIFontTTF.h"
+ 
+ #include "GUIFontManager.h"
++#include "utils/StringUtils.h"
++#include "utils/URIUtils.h"
+ #include "ServiceBroker.h"
+ #include "Texture.h"
+ #include "URL.h"
+@@ -160,6 +162,33 @@
+     return face;
+   };
+ 
++  FT_Face GetFontFromMemory(const std::vector<uint8_t>& memoryBuf,
++                            float size,
++                            float aspect)
++  {
++    if (!m_library)
++      FT_Init_FreeType(&m_library);
++    if (!m_library)
++      return nullptr;
++
++    FT_Face face;
++    if (FT_New_Memory_Face(m_library, reinterpret_cast<const FT_Byte*>(memoryBuf.data()),
++                           memoryBuf.size(), 0, &face) != 0)
++      return nullptr;
++
++    unsigned int ydpi = 72;
++    unsigned int xdpi =
++        static_cast<unsigned int>(MathUtils::round_int(static_cast<double>(ydpi * aspect)));
++
++    if (FT_Set_Char_Size(face, 0, static_cast<int>(size * 64 + 0.5f), xdpi, ydpi))
++    {
++      FT_Done_Face(face);
++      return nullptr;
++    }
++
++    return face;
++  };
++
+   FT_Stroker GetStroker()
+   {
+     if (!m_library)
+@@ -191,6 +220,9 @@
+ XBMC_GLOBAL_REF(CFreeTypeLibrary, g_freeTypeLibrary); // our freetype library
+ #define g_freeTypeLibrary XBMC_GLOBAL_USE(CFreeTypeLibrary)
+ 
++// Shared buffer for the fallback font file data (loaded once, used by all CGUIFontTTF instances)
++static std::vector<uint8_t> s_fallbackFontBuffer;
++
+ CGUIFontTTF::CGUIFontTTF(const std::string& fontIdent)
+   : m_fontIdent(fontIdent),
+     m_staticCache(*this),
+@@ -249,6 +281,9 @@
+   if (m_face)
+     g_freeTypeLibrary.ReleaseFont(m_face);
+   m_face = nullptr;
++  if (m_fallbackFace)
++    g_freeTypeLibrary.ReleaseFont(m_fallbackFace);
++  m_fallbackFace = nullptr;
+   if (m_stroker)
+     g_freeTypeLibrary.ReleaseStroker(m_stroker);
+   m_stroker = nullptr;
+@@ -337,6 +372,47 @@
+   m_posX = m_textureWidth;
+   m_posY = -static_cast<int>(GetTextureLineHeight());
+ 
++  // Load fallback font for missing glyphs (e.g. CJK characters)
++  std::string fontFile = URIUtils::GetFileName(strFilename);
++  StringUtils::ToLower(fontFile);
++  if (fontFile != "arial.ttf")
++  {
++    std::string fallbackPath =
++        CSpecialProtocol::TranslatePath("special://xbmc/media/Fonts/arial.ttf");
++
++    // Load fallback font file into shared buffer (only once for the entire process)
++    if (s_fallbackFontBuffer.empty())
++    {
++      XFILE::CFile f;
++      if (f.LoadFile(fallbackPath, s_fallbackFontBuffer) <= 0)
++      {
++        CLog::Log(LOGWARNING,
++                  "CGUIFontTTF::Load - Failed to load fallback font file '{}'", fallbackPath);
++        s_fallbackFontBuffer.clear();
++      }
++      else
++      {
++        CLog::Log(LOGINFO,
++                  "CGUIFontTTF::Load - Loaded fallback font file '{}' ({} bytes) into shared buffer",
++                  fallbackPath, s_fallbackFontBuffer.size());
++      }
++    }
++
++    // Create instance-specific FT_Face from shared buffer
++    if (!s_fallbackFontBuffer.empty())
++    {
++      m_fallbackFace =
++          g_freeTypeLibrary.GetFontFromMemory(s_fallbackFontBuffer, height, aspect);
++      if (m_fallbackFace)
++        CLog::Log(LOGINFO,
++                  "CGUIFontTTF::Load - Created fallback face (h={:.1f}) for '{}'", height,
++                  strFilename);
++      else
++        CLog::Log(LOGWARNING,
++                  "CGUIFontTTF::Load - Failed to create fallback face for '{}'", strFilename);
++    }
++  }
++
+   return true;
+ }
+ 
+@@ -878,6 +954,18 @@
+   if (!glyphIndex)
+     glyphIndex = FT_Get_Char_Index(m_face, letter);
+ 
++  // Fallback: if glyph not found in primary face, try fallback face
++  FT_Face faceToUse = m_face;
++  if (!glyphIndex && m_fallbackFace)
++  {
++    FT_UInt fallbackGlyphIndex = FT_Get_Char_Index(m_fallbackFace, letter);
++    if (fallbackGlyphIndex)
++    {
++      glyphIndex = fallbackGlyphIndex;
++      faceToUse = m_fallbackFace;
++    }
++  }
++
+   // quick access to the most frequently used glyphs
+   if (glyphIndex < MAX_GLYPH_IDX)
+   {
+@@ -923,7 +1011,7 @@
+     End();
+ 
+   m_char.emplace(m_char.begin() + low);
+-  if (!CacheCharacter(glyphIndex, style, m_char.data() + low))
++  if (!CacheCharacter(glyphIndex, style, m_char.data() + low, faceToUse))
+   { // unable to cache character - try clearing them all out and starting over
+     CLog::LogF(LOGDEBUG, "Unable to cache character. Clearing character cache of {} characters",
+                m_char.size());
+@@ -931,7 +1019,7 @@
+     low = 0;
+     startIndex = 0;
+     m_char.emplace(m_char.begin());
+-    if (!CacheCharacter(glyphIndex, style, m_char.data()))
++    if (!CacheCharacter(glyphIndex, style, m_char.data(), faceToUse))
+     {
+       CLog::LogF(LOGERROR, "Unable to cache character (out of memory?)");
+       if (nestedBeginCount)
+@@ -961,10 +1049,13 @@
+   return m_char.data() + low;
+ }
+ 
+-bool CGUIFontTTF::CacheCharacter(FT_UInt glyphIndex, uint32_t style, Character* ch)
++bool CGUIFontTTF::CacheCharacter(FT_UInt glyphIndex, uint32_t style, Character* ch, FT_Face face)
+ {
++  if (!face)
++    face = m_face;
++
+   FT_Glyph glyph = nullptr;
+-  if (FT_Load_Glyph(m_face, glyphIndex, FT_LOAD_TARGET_LIGHT))
++  if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_TARGET_LIGHT))
+   {
+     CLog::LogF(LOGDEBUG, "Failed to load glyph {:x}", glyphIndex);
+     return false;
+@@ -972,15 +1063,15 @@
+ 
+   // make bold if applicable
+   if (style & FONT_STYLE_BOLD)
+-    SetGlyphStrength(m_face->glyph, GLYPH_STRENGTH_BOLD);
++    SetGlyphStrength(face->glyph, GLYPH_STRENGTH_BOLD);
+   // and italics if applicable
+   if (style & FONT_STYLE_ITALICS)
+-    ObliqueGlyph(m_face->glyph);
++    ObliqueGlyph(face->glyph);
+   // and light if applicable
+   if (style & FONT_STYLE_LIGHT)
+-    SetGlyphStrength(m_face->glyph, GLYPH_STRENGTH_LIGHT);
++    SetGlyphStrength(face->glyph, GLYPH_STRENGTH_LIGHT);
+   // grab the glyph
+-  if (FT_Get_Glyph(m_face->glyph, &glyph))
++  if (FT_Get_Glyph(face->glyph, &glyph))
+   {
+     CLog::LogF(LOGDEBUG, "Failed to get glyph {:x}", glyphIndex);
+     return false;
+@@ -1056,7 +1147,7 @@
+   ch->m_right = ch->m_left + bitmap.width;
+   ch->m_bottom = ch->m_top + bitmap.rows;
+   ch->m_advance =
+-      static_cast<float>(MathUtils::round_int(static_cast<double>(m_face->glyph->advance.x) / 64));
++      static_cast<float>(MathUtils::round_int(static_cast<double>(face->glyph->advance.x) / 64));
+ 
+   // we need only render if we actually have some pixels
+   if (!isEmptyGlyph)
