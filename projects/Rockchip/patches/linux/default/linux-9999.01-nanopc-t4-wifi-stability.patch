@@ -1,0 +1,73 @@
+--- a/arch/arm64/boot/dts/rockchip/rk3399-nanopc-t4.dts	2026-03-09 16:58:14.276327511 +0800
++++ b/arch/arm64/boot/dts/rockchip/rk3399-nanopc-t4.dts	2026-03-09 16:58:10.249641912 +0800
+@@ -135,3 +135,70 @@
+ 	gpios = <&gpio4 RK_PD2 GPIO_ACTIVE_HIGH>;
+ 	vin-supply = <&vcc5v0_sys>;
+ };
++
++/* 
++ *===========================================================
++ * FIX: NanoPC-T4 SDIO WiFi Stability Patch for Broadcom
++ *===========================================================
++ */
++/*
++// 1. Define the 1.8V regulator to ensure proper SDIO UHS voltage negotiation
++/ {
++	vccio_wl: vccio-wl {
++		compatible = "regulator-fixed";
++		regulator-name = "vccio_wl";
++		regulator-always-on;
++		regulator-boot-on;
++		regulator-min-microvolt = <1800000>;
++		regulator-max-microvolt = <1800000>;
++	};
++};
++ */
++// 2. Ensure the host-wake pin is explicitly configured as a GPIO even during system sleep
++&pinctrl {
++	sdio-pwrseq {
++		wifi_host_wake_l: wifi-host-wake-l {
++			rockchip,pins = <0 RK_PA3 RK_FUNC_GPIO &pcfg_pull_up>;
++		};
++	};
++};
++
++// 3. Override SDIO node configuration
++&sdio0 {
++	//vqmmc-supply = <&vccio_wl>; // lock to 1.8V IO
++	
++	/*
++	 * SDIO 3.0 (UHS-I) Standard Frequency Tiers:
++	 *  - SDR12:  25 MHz  (Max 12.5 MB/s)
++	 *  - SDR25:  50 MHz  (Max 25 MB/s)
++	 *  - SDR50:  100 MHz (Max 50 MB/s)
++	 *  - SDR104: 208 MHz (Max 104 MB/s, usually capped at 150MHz by RK3399)
++	 *
++	 * Note: Based on actual iperf3 bidirectional load testing on NanoPC-T4,
++	 * 150MHz (SDR104) causes severe CRC errors (-84) and bus_sleep timeouts (-110).
++	 * Maybe this is due to physical SDR signal integrity degradation and rigid
++	 * closed-source firmware quirks.
++	 *
++	 * 100MHz is the tested sweet spot for maximum stability while maintaining
++	 * acceptable throughput. For absolute stability on degraded
++	 * boards, uncomment the lines below to enforce a harsh 50MHz fallback.
++	 */
++	/delete-property/ sd-uhs-sdr104;
++	/delete-property/ sd-uhs-sdr50;
++	sd-uhs-sdr104;
++	max-frequency = <100000000>; 
++	
++	#address-cells = <1>;
++	#size-cells = <0>;
++	
++	brcmf: wifi@1 {
++		compatible = "brcm,bcm4329-fmac"; 
++		reg = <1>;
++		interrupt-parent = <&gpio0>;
++		// Bind RK_PA3 as OOB Host Wake based on schematic. Set to active-low (_L) to match schematic expectations.
++		interrupts = <RK_PA3 IRQ_TYPE_LEVEL_LOW>; 
++		interrupt-names = "host-wake";
++		pinctrl-names = "default";
++		pinctrl-0 = <&wifi_host_wake_l>;
++	};
++};

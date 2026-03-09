@@ -37,4 +37,4 @@
     ADDON_PROJECT="ARMv8"
 
   # additional packages
-    ADDITIONAL_PACKAGES+=" pciutils bcmdhd-sdio board-user-configs "
+    ADDITIONAL_PACKAGES+=" pciutils board-user-configs "

@@ -1,0 +1,34 @@
+--- a/drivers/net/wireless/broadcom/brcm80211/brcmfmac/cfg80211.c
++++ b/drivers/net/wireless/broadcom/brcm80211/brcmfmac/cfg80211.c
+@@ -3286,6 +3286,17 @@
+ 	 * preference in cfg struct to apply this to
+ 	 * FW later while initializing the dongle
+ 	 */
++	/* BCM43751/43752 (AP6398SV): 802.11 PSM races with the driver SR/KSO
++	 * sleep mechanism causing SDIO bus hangs. Force PM_OFF permanently.
++	 * Reject any attempt to enable power_save so wdev->ps stays consistent.
++	 */
++	if (drvr->bus_if->chip == BRCM_CC_43751_CHIP_ID ||
++	    drvr->bus_if->chip == CY_CC_43752_CHIP_ID) {
++		if (enabled) {
++			brcmf_err("power_save not supported on BCM43751/43752 (SR race workaround)\n");
++			return -EOPNOTSUPP;
++		}
++	}
+ 	cfg->pwr_save = enabled;
+ 	if (!check_vif_up(ifp->vif)) {
+ 
+@@ -7733,7 +7744,12 @@
+ 
+ 	brcmf_dongle_scantime(ifp);
+ 
+-	power_mode = cfg->pwr_save ? PM_FAST : PM_OFF;
++	/* BCM43751/43752: force PM_OFF regardless of cfg->pwr_save */
++	if (ifp->drvr->bus_if->chip == BRCM_CC_43751_CHIP_ID ||
++	    ifp->drvr->bus_if->chip == CY_CC_43752_CHIP_ID)
++		power_mode = PM_OFF;
++	else
++		power_mode = cfg->pwr_save ? PM_FAST : PM_OFF;
+ 	err = brcmf_fil_cmd_int_set(ifp, BRCMF_C_SET_PM, power_mode);
+ 	if (err)
+ 		goto default_conf_out;
