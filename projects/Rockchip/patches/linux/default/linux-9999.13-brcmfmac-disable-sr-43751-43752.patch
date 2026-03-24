@@ -1,0 +1,43 @@
+--- a/drivers/net/wireless/broadcom/brcm80211/brcmfmac/sdio.c
++++ b/drivers/net/wireless/broadcom/brcm80211/brcmfmac/sdio.c
+@@ -4358,6 +4358,40 @@
+ 
+ 	if (brcmf_chip_sr_capable(bus->ci)) {
+ 		brcmf_sdio_sr_init(bus);
++		/*
++		 * BCM43751/43752: Prevent driver-initiated SR sleep to
++		 * avoid a race condition between firmware 802.11 PSM
++		 * self-wakeup and driver KSO sleep/wake operations.
++		 *
++		 * When sr_enabled=true, the watchdog calls bus_sleep(true)
++		 * after idletime ticks, which does KSO=0 to put the chip
++		 * into SR deep sleep. But the firmware's PSM independently
++		 * wakes the chip for DTIM beacons, causing the AOS to be
++		 * in a transient state when the driver tries to toggle KSO.
++		 * This results in CMD timeouts (-110) and bus death.
++		 *
++		 * Setting idletime=0 prevents the watchdog from ever
++		 * triggering bus_sleep(true). KSO stays at 1, the chip's
++		 * SDIO side never enters SR sleep, so there is no transient
++		 * state to collide with firmware PSM self-wakeup.
++		 *
++		 * SR hardware init (FORCE_HT, wakeupctrl, cardcap) and
++		 * sr_enabled remain intact — the SR-compatible clock
++		 * management code paths (htclk as no-op, etc.) continue
++		 * to work correctly. Only the idle-triggered KSO sleep
++		 * is suppressed.
++		 *
++		 * 802.11 PSM remains active — firmware still does DTIM-based
++		 * power saving on the wireless side. Only the SDIO bus-level
++		 * SR deep sleep is bypassed.
++		 */
++		if (bus->ci->chip == BRCM_CC_43751_CHIP_ID ||
++		    bus->ci->chip == CY_CC_43752_CHIP_ID) {
++			bus->idletime = 0;
++			brcmf_err("KSO sleep suppressed for chip 0x%04x "
++				  "(PSM race workaround), idletime set to 0\n",
++				  bus->ci->chip);
++		}
+ 	} else {
+ 		/* Restore previous clock setting */
+ 		brcmf_sdiod_writeb(sdiod, SBSDIO_FUNC1_CHIPCLKCSR,
