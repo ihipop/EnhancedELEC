@@ -141,6 +141,8 @@ echo
 echo "Successful build, creating image..." >&2
 
 # Create legacy sym links
+# workaround: systemd force interpret %h to /root/ for root user regardless of passwd file
+ln -sfn /storage ${INSTALL}/root
 ln -sfn /var/media ${INSTALL}/media
 ln -sfn /usr/lib ${INSTALL}/lib
 ln -sfn /usr/bin ${INSTALL}/bin
