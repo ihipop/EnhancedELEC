@@ -1,0 +1,28 @@
+name: Keep Cache Alive
+
+on:
+  schedule:
+    # 定时运行：每周日和周四的北京时间午夜执行一次
+    - cron: '0 16 * * 3,6'
+  workflow_dispatch:
+    # 允许手动触发
+
+jobs:
+  keep-cache-alive:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set Build Variables
+        uses: ./.github/actions/setup-env
+
+      - name: Restore Build Caches
+        uses: ./.github/actions/restore-caches
+
+      - name: Print cache sizes
+        run: |
+          echo "=== Cache Sizes ==="
+          du -sh sources/ .ccache/ || true
+          echo "Cache restored successfully to update the last accessed time."

@@ -1,0 +1,13 @@
+name: 'Setup Build Variables'
+description: 'Extracts build variables and sets them in GITHUB_ENV'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Extract Variables
+      run: |
+        # 从设备脚本提取项目、架构和设备信息
+        grep "^export " .github/scripts/build_nanopct4.sh | sed 's/export //' >> $GITHUB_ENV
+        # 从版本文件提取版本号，并剔除引号和空格
+        grep -E "ADDON_VERSION=|OS_VERSION=" distributions/EnhancedELEC/version | tr -d ' ' | tr -d '"' >> $GITHUB_ENV
+      shell: bash

@@ -1,0 +1,23 @@
+name: 'Restore Build Caches'
+description: 'Restores sources and ccache'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Restore sources cache
+      uses: actions/cache/restore@v4
+      with:
+        path: sources/
+        key: ${{ runner.os }}-sources-${{ env.OS_VERSION }}-${{ env.DEVICE }}-${{ env.ARCH }}-${{ hashFiles('packages/**/*.mk') }}
+        restore-keys: |
+          ${{ runner.os }}-sources-${{ env.OS_VERSION }}-${{ env.DEVICE }}-${{ env.ARCH }}-
+          ${{ runner.os }}-sources-
+
+    - name: Restore ccache cache
+      uses: actions/cache/restore@v4
+      with:
+        path: .ccache/
+        key: ${{ runner.os }}-ccache-${{ env.OS_VERSION }}-${{ env.DEVICE }}-${{ env.ARCH }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-ccache-${{ env.OS_VERSION }}-${{ env.DEVICE }}-${{ env.ARCH }}-
+          ${{ runner.os }}-ccache-

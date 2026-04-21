@@ -1,0 +1,154 @@
+name: Build LibreELEC
+
+on:
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create a GitHub Release'
+        required: false
+        type: boolean
+        default: false
+      generate_release_notes:
+        description: 'Generate release notes'
+        required: false
+        type: boolean
+        default: false
+      # addon_overwrite:
+      #   description: 'Overwrite existing addons'
+      #   required: false
+      #   type: boolean
+      #   default: false
+  # push:
+  #   tags:
+  #     - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  BUILDER_NAME: ihipop
+  ADDON_OVERWRITE: ${{ github.event.inputs.addon_overwrite == 'true' && 'yes' || 'no' }}
+  KBUILD_BUILD_USER: ihipop
+  KBUILD_BUILD_HOST: EnhancedELEC
+  DISTRO: EnhancedELEC
+  OEM: "yes"
+  # CUSTOM_VERSION: "999"
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    # runs-on: [self-hosted, linux, x64]
+    
+    steps:
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@v10
+        with:
+          root-reserve-mb: 5120
+          swap-size-mb: 1024
+          overprovision-lvm: 'true'
+          remove-dotnet: 'true'
+          remove-android: 'true'
+          remove-haskell: 'true'
+          remove-codeql: 'true'
+          remove-docker-images: 'true' # 清理掉预装的镜像以腾出空间
+
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set Build Variables
+        uses: ./.github/actions/setup-env
+
+      - name: Restore Build Caches
+        uses: ./.github/actions/restore-caches
+
+      - name: Prepare directories if no cache exists
+        run: |
+          mkdir -p sources/ .ccache/
+          # 确保容器内外用户都能读写和进入目录，避免权限冲突
+          sudo chmod -R 777 .
+
+      - name: Generate LibreELEC options
+        run: |
+          mkdir -p .libreelec
+          cat <<EOF > .libreelec/options
+          BUILDER_NAME=${{ env.BUILDER_NAME }}
+          ADDON_OVERWRITE=${{ env.ADDON_OVERWRITE }}
+          KBUILD_BUILD_USER=${{ env.KBUILD_BUILD_USER }}
+          KBUILD_BUILD_HOST=${{ env.KBUILD_BUILD_HOST }}
+          DISTRO=${{ env.DISTRO }}
+          OEM=${{ env.OEM }}
+          EOF
+          # 同样给予 options 文件权限
+          chmod 666 .libreelec/options
+
+      - name: Print cache sizes (Before Build)
+        run: |
+          echo "=== Cache Sizes Before Build ==="
+          du -sh sources/ .ccache/ || true
+
+      - name: Build Docker environment
+        run: |
+          docker build --pull -t libreelec tools/docker/bookworm
+
+      - name: Compile LibreELEC
+        run: |
+          docker run --rm \
+            --log-driver none \
+            -v ${{ github.workspace }}:/build \
+            -w /build \
+            libreelec bash ./.github/scripts/build_nanopct4.sh
+      
+      - name: Fix permissions
+        if: always()
+        run: |
+          sudo chown -R $(id -u):$(id -g) .
+
+      - name: Upload Debug Logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-logs-${{ env.DEVICE }}-${{ env.ARCH }}
+          path: |
+            build.log
+            build.*/.threads/logs/*.log
+          retention-days: 1
+          include-hidden-files: true
+      
+      - name: Print cache sizes (After Build)
+        run: |
+          echo "=== Cache Sizes After Build ==="
+          du -sh sources/ .ccache/ || true
+
+      - name: Save sources cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: sources/
+          key: ${{ runner.os }}-sources-${{ env.OS_VERSION }}-${{ env.DEVICE }}-${{ env.ARCH }}-${{ hashFiles('packages/**/*.mk') }}
+
+      - name: Save ccache cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: .ccache/
+          key: ${{ runner.os }}-ccache-${{ env.OS_VERSION }}-${{ env.DEVICE }}-${{ env.ARCH }}-${{ github.sha }}
+      
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: libreelec-images-${{ env.DEVICE }}-${{ env.ARCH }}
+          path: |
+            target/*.img.gz*
+            target/*.tar*
+          retention-days: 7
+
+      - name: Create GitHub Release
+        if: |
+          startsWith(github.ref, 'refs/tags/v') || 
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            target/*.img.gz*
+            target/*.tar*
+          generate_release_notes: ${{ github.event.inputs.generate_release_notes || 'false' }}
