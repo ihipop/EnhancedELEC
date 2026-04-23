@@ -32,7 +32,7 @@ rm -f "${STAMP_URL}" "${STAMP_SHA}"
 NBWGET=10
 NBCHKS=2
 while [ ${NBWGET} -gt 0 -a ${NBCHKS} -gt 0 ]; do
-  for url in "${PKG_URL}" "${PACKAGE_MIRROR}"; do
+  for url in "${PKG_URL}" "${PACKAGE_MIRROR}" "https://web.archive.org/web/0id_/${PKG_URL}"; do
     rm -f "${PACKAGE}"
     [[ "${url}" =~ ^[fF][tT][pP]:* ]] && WGET_FTP=--passive-ftp || WGET_FTP=
     if ${WGET_CMD} ${WGET_FTP} "${url}"; then
