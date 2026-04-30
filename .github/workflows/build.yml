@@ -38,19 +38,33 @@ jobs:
   build-and-release:
     runs-on: ubuntu-latest
     # runs-on: [self-hosted, linux, x64]
+    defaults:
+      run:
+        shell: bash
     
     steps:
-      - name: Maximize build space
-        uses: easimon/maximize-build-space@v10
-        with:
-          root-reserve-mb: 5120
-          swap-size-mb: 1024
-          overprovision-lvm: 'true'
-          remove-dotnet: 'true'
-          remove-android: 'true'
-          remove-haskell: 'true'
-          remove-codeql: 'true'
-          remove-docker-images: 'true' # 清理掉预装的镜像以腾出空间
+      - name: Cleanup pre-installed tools
+        run: |
+          echo "=== Storage before cleanup ==="
+          df -h
+          echo "=== Freeing up space (Full Manual Cleanup) ==="
+          # 1. Remove .NET
+          sudo rm -rf /usr/share/dotnet
+          # 2. Remove Android
+          sudo rm -rf /usr/local/lib/android
+          # 3. Remove Haskell (GHC)
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          # 4. Remove CodeQL
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          # 5. Remove Docker Images & PowerShell
+          sudo docker image prune --all --force
+          sudo rm -rf /usr/local/share/powershell
+          # 额外清理 apt 缓存
+          sudo apt-get clean
+          echo "=== Storage after cleanup ==="
+          df -h
+          echo "=== Cleanup Complete ==="
 
       - name: Checkout source code
         uses: actions/checkout@v4
