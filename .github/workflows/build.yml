@@ -100,9 +100,8 @@ jobs:
           echo "=== Cache Sizes Before Build ==="
           du -sh sources/ .ccache/ || true
 
-      - name: Build Docker environment
-        run: |
-          docker build --pull -t libreelec tools/docker/bookworm
+      - name: Pull Docker environment
+        run: docker pull ghcr.io/ihipop/libreelec-build:bookworm
 
       - name: Compile LibreELEC
         run: |
@@ -110,7 +109,7 @@ jobs:
             --log-driver none \
             -v ${{ github.workspace }}:/build \
             -w /build \
-            libreelec bash ./.github/scripts/build_nanopct4.sh
+            ghcr.io/ihipop/libreelec-build:bookworm bash ./.github/scripts/build_nanopct4.sh
       
       - name: Fix permissions
         if: always()

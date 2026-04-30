@@ -11,6 +11,7 @@ export ARCH=aarch64
 export DEVICE=RK3399
 export UBOOT_SYSTEM=nanopc-t4
 export BUILD_PERIODIC=daily
+export DISTRO=EnhancedELEC
 
 # Build System Configuration
 export CCACHE_DIR=/build/.ccache
