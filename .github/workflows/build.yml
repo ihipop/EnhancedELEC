@@ -141,7 +141,7 @@ jobs:
 
       - name: Save ccache cache
         uses: actions/cache/save@v4
-        if: always()
+        if: success()
         with:
           path: .ccache/
           key: ${{ runner.os }}-ccache-${{ env.OS_VERSION }}-${{ env.DEVICE }}-${{ env.ARCH }}-${{ github.sha }}
